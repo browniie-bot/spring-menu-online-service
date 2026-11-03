@@ -8,6 +8,8 @@ public record CreateProductRequest(
         String description,
         List<PriceRequest> prices,
         List<Long> tagsIds,
+        boolean newProduct,
+        boolean bestSelling,
         long categoryId,
         boolean active) {
 

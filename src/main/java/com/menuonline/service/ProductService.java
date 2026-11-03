@@ -76,6 +76,8 @@ public class ProductService {
         product.setDescription(request.description());
         product.setCategory(category);
         product.setActive(request.active());
+        product.setBestSelling(request.bestSelling());
+        product.setNewProduct(request.newProduct());
         product.setTags(loadProductTags(request));
         Product saved = productRepository.save(product);
         log.info("create product - id:{}", saved.getId());
@@ -116,6 +118,8 @@ public class ProductService {
         product.setActive(request.active());
         product.setDescription(request.description());
         product.setCategory(category);
+        product.setBestSelling(request.bestSelling());
+        product.setNewProduct(request.newProduct());
         List<Price> newPrices = new ArrayList<>();
         for (var rp : request.prices()) {
             newPrices.add(new Price(null, rp.value(), rp.unit(), product));

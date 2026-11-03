@@ -91,6 +91,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
                 p.active,
                 p.category_id,
                 p.description,
+                p.new_product,
+                p.best_selling,
                 pr.id AS priceId,
                 pr.unit,
                 pr.value,
@@ -114,12 +116,14 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         public long getId();
         public String getProductName();
         public String getImage();
+        public boolean isActive();
+        public long getCategoryId();
+        public String getDescription();
+        public boolean isNewProduct();
+        public boolean isBestSelling();
         public Long getPriceId();
         public String getUnit();
         public BigDecimal getValue();
-        public String getDescription();
-        public boolean isActive();
-        public long getCategoryId();
         public String getCategoryName();
         public Long getTagId();
         public String getTagName();

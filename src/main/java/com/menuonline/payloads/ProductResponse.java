@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.menuonline.entity.Product;
-import com.menuonline.repository.ProductRepository.ProductProjection;
 
 public record ProductResponse(
         long id,
@@ -14,6 +13,8 @@ public record ProductResponse(
         Boolean active,
         String image,
         List<PriceResponse> prices,
+        boolean newProduct,
+        boolean bestSelling,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         long categoryId,
@@ -31,6 +32,8 @@ public record ProductResponse(
                 product.isActive(),
                 product.getImage(),
                 prices,
+                product.isNewProduct(),
+                product.isBestSelling(),
                 product.getCreatedAt(),
                 product.getUpdatedAt(),
                 product.getCategory().getId(),

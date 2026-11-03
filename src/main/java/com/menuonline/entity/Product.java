@@ -1,6 +1,5 @@
 package com.menuonline.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +46,10 @@ public class Product {
     private String name;
     
     private String description;
+
+    private boolean newProduct;
+
+    private boolean bestSelling;
 
     private String image;
 

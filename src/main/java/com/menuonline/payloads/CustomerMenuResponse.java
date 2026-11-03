@@ -10,9 +10,14 @@ import com.menuonline.entity.Schedule;
 import com.menuonline.entity.UserEntity;
 import com.menuonline.repository.ProductRepository.ProductMenuProjection;
 
+import lombok.Builder;
+
+@Builder
 public record CustomerMenuResponse(
         EstablishmentInfoResponse info,
         CustomizationResponse customization,
+        List<ProductResponse> bestSelling,
+        List<ProductResponse> newProducts,
         List<ScheduleResponse> schedules,
         List<CategoryResponse> categories) {
 
@@ -27,53 +32,111 @@ public record CustomerMenuResponse(
         List<ScheduleResponse> scheduleResponses = ScheduleResponse.from(schedules);
 
         List<CategoryResponse> categories = new ArrayList<>();
+        List<ProductResponse> bestSellings = buildBestSellingList(projection);
+        List<ProductResponse> newProducts = buildNewProducts(projection);
 
-        for (ProductMenuProjection proj : projection) {
+        for (ProductMenuProjection proj : projection.stream().filter(p -> !p.isBestSelling() && !p.isNewProduct())
+                .toList()) {
             Optional<CategoryResponse> category = categories.stream()
                     .filter(cat -> cat.id() == proj.getCategoryId())
                     .findFirst();
-
-            category.ifPresentOrElse(cat -> {
+            if (category.isPresent()) {
+                CategoryResponse cat = category.get();
                 cat.products()
                         .stream()
                         .filter(p -> p.id() == proj.getId())
                         .findFirst()
                         .ifPresentOrElse(p -> {
-                            // PRICES
-                            p.prices().stream()
-                                    .filter(pr -> pr.id() == proj.getPriceId().longValue())
-                                    .findFirst()
-                                    .ifPresentOrElse(price -> {
-                                    }, () -> p.prices().add(createPrice(proj)));
-
-                            // TAGS
-                            if (proj.getTagName() != null) {
-                                p.tags().stream()
-                                        .filter(t -> t.id().equals(proj.getTagId()))
-                                        .findFirst()
-                                        .orElseGet(() -> {
-                                            p.tags().add(new TagsResponse(proj.getTagId(), proj.getTagName()));
-                                            return null;
-                                        });
-                            }
+                            incrementExitingProdct(proj, p);
                         }, () -> {
                             List<PriceResponse> prices = new ArrayList<>();
                             PriceResponse price = createPrice(proj);
                             prices.add(price);
                             cat.products().add(createProduct(proj, prices));
                         });
-            }, () -> { // if category does not exist yet
-                List<PriceResponse> prices = new ArrayList<>();
-                PriceResponse price = createPrice(proj);
-                prices.add(price);
-                List<ProductResponse> products = new ArrayList<>();
-                products.add(createProduct(proj, prices));
-                CategoryResponse cat = new CategoryResponse(proj.getCategoryId(),
-                        proj.getCategoryName(), products);
+            } else {
+                CategoryResponse cat = createCategory(proj);
                 categories.add(cat);
-            });
+            }
+
         }
-        return new CustomerMenuResponse(info, CustomizationResponse.from(customization), scheduleResponses, categories);
+        return CustomerMenuResponse.builder()
+                .info(info)
+                .bestSelling(bestSellings)
+                .newProducts(newProducts)
+                .customization(CustomizationResponse.from(customization))
+                .schedules(scheduleResponses)
+                .categories(categories)
+                .build();
+    }
+
+    private static void incrementExitingProdct(ProductMenuProjection proj, ProductResponse p) {
+        // PRICES
+        p.prices().stream()
+                .filter(pr -> pr.id() == proj.getPriceId().longValue())
+                .findFirst()
+                .ifPresentOrElse(price -> {
+                }, () -> p.prices().add(createPrice(proj)));
+
+        // TAGS
+        if (proj.getTagName() != null) {
+            p.tags().stream()
+                    .filter(t -> t.id().equals(proj.getTagId()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        p.tags().add(new TagsResponse(proj.getTagId(), proj.getTagName()));
+                        return null;
+                    });
+        }
+    }
+
+    private static List<ProductResponse> buildNewProducts(List<ProductMenuProjection> projection) {
+        List<ProductResponse> list = new ArrayList<>();
+        for (var prod : projection.stream().filter(p -> p.isNewProduct()).toList()) {
+            Optional<ProductResponse> product = list.stream()
+                    .filter(p -> p.id() == prod.getId())
+                    .findFirst();
+            if (product.isPresent()) {
+                incrementExitingProdct(prod, product.get());
+            } else {
+                // product do not exist in the list
+                PriceResponse price = createPrice(prod);
+                List<PriceResponse> prices = new ArrayList<>();
+                prices.add(price);
+                list.add(createProduct(prod, prices));
+            }
+        }
+        return list;
+    }
+
+    private static List<ProductResponse> buildBestSellingList(List<ProductMenuProjection> projection) {
+        List<ProductResponse> list = new ArrayList<>();
+        for (var prod : projection.stream().filter(p -> p.isBestSelling()).toList()) {
+            Optional<ProductResponse> product = list.stream()
+                    .filter(p -> p.id() == prod.getId())
+                    .findFirst();
+            if (product.isPresent()) {
+                incrementExitingProdct(prod, product.get());
+            } else {
+                // product do not exist in the list
+                PriceResponse price = createPrice(prod);
+                List<PriceResponse> prices = new ArrayList<>();
+                prices.add(price);
+                list.add(createProduct(prod, prices));
+            }
+        }
+        return list;
+    }
+
+    private static CategoryResponse createCategory(ProductMenuProjection proj) {
+        List<PriceResponse> prices = new ArrayList<>();
+        PriceResponse price = createPrice(proj);
+        prices.add(price);
+        List<ProductResponse> products = new ArrayList<>();
+        products.add(createProduct(proj, prices));
+        CategoryResponse cat = new CategoryResponse(proj.getCategoryId(),
+                proj.getCategoryName(), products);
+        return cat;
     }
 
     private static PriceResponse createPrice(ProductMenuProjection proj) {
@@ -90,6 +153,9 @@ public record CustomerMenuResponse(
                 proj.getProductName(),
                 proj.getImage(),
                 proj.getDescription(),
+                proj.isNewProduct(),
+                proj.isBestSelling(),
+                proj.getCategoryName(),
                 tags,
                 prices);
         return product;
@@ -120,6 +186,9 @@ public record CustomerMenuResponse(
             String name,
             String image,
             String description,
+            boolean newProduct,
+            boolean bestSelling,
+            String categoryName,
             List<TagsResponse> tags,
             List<PriceResponse> prices) {
     }

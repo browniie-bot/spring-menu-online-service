@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS products(
     name VARCHAR(120) NOT NULL,
     description VARCHAR(320),
     image VARCHAR,
+    new_product BOOLEAN DEFAULT FALSE,
+    best_selling BOOLEAN DEFAULT FALSE,
     active BOOLEAN DEFAULT TRUE,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL,
