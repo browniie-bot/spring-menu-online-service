@@ -150,7 +150,7 @@ public class StripeService {
             SessionCreateParams sessionCreateParams = SessionCreateParams.builder()
                     .setCustomer(customer)
                     .setLocale(SessionCreateParams.Locale.PT_BR)
-                    .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                    .addAllowedPaymentMethodType(SessionCreateParams.AllowedPaymentMethodType.CARD)
                     .setSetupIntentData(SessionCreateParams.SetupIntentData.builder()
                             .putMetadata("customer_id", customer)
                             .putMetadata("subscription_id", subscription)
